@@ -1262,11 +1262,23 @@ ${hasAny?`<rect x="20" y="84" width="${earned/5*160}" height="10" rx="5" fill="$
 // ── SVGルーティング ───────────────────────────────────────────
 const CAR_SVG_FNS={fire:fireTruckSVG,police:policeSVG,ambu:ambuSVG,taxi:taxiSVG,excav:excavSVG,bull:bullSVG,crane:craneSVG,dump:dumpSVG,bus:busSVG,truck:truckSVG,mail:mailSVG,garb:garbSVG,tow:towSVG,snow:snowSVG,roller:rollerSVG,aerial:aerialSVG,ladder:ladderSVG,tanker:tankerSVG,school:schoolSVG,water:waterSVG};
 
+// ── v2トーン変換（どうぶつの森ライク・DESIGN_GUIDE v2） ────────
+// 車20種は形はそのまま、黒輪郭→暖色ブラウン・接地影→ふんわり緑影にする。
+// フィルタidは全車共通（同一定義なのでDOMに複数並んでも問題ない）。
+const V2_SHADOW_FILTER='<defs><filter id="carsoftv2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter></defs>';
+function toneV2(svg){
+  return svg
+    .replace(/<svg([^>]*)>/,`<svg$1>${V2_SHADOW_FILTER}`)
+    .replace(/<ellipse cx="100" cy="147"/g,'<ellipse filter="url(#carsoftv2)" cx="100" cy="146"')
+    .replaceAll('#1A1A1A','#6B4A2E')
+    .replace(/fill="rgba\(0,0,0,(\.\d+)\)"/g,'fill="rgba(47,74,40,$1)"');
+}
+
 function getCarSVG(id,dots,animIdx=-1){
   const fn=CAR_SVG_FNS[id];
-  if(fn)return fn(dots,animIdx);
+  if(fn)return toneV2(fn(dots,animIdx));
   const s=STAGES.find(x=>x.id===id);
-  return placeholderSVG(s?s.color:'#888',s?s.name:id,dots,animIdx);
+  return toneV2(placeholderSVG(s?s.color:'#888',s?s.name:id,dots,animIdx));
 }
 function carLabelHTML(s){
   return `<span class="tb-car-icon">${getCarSVG(s.id,ALL_TRUE)}</span><span>${s.name}</span>`;

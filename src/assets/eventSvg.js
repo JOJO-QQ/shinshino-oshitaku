@@ -106,4 +106,10 @@ hydrant:`<svg viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg" aria-hidden
 
 function personSVG(type){return PERSON_SVGS[type]||BOY_SVG;}
 
+// ── v2トーン変換: 黒系輪郭を暖色ブラウンへ（DESIGN_GUIDE v2） ──
+// アイコン群は形はそのまま、輪郭色だけ町の新絵柄に合わせる。
+const toneV2=s=>s.replaceAll('#1A1A1A','#6B4A2E').replaceAll('#2F3A3D','#5C4630');
+for(const o of[EVT_SVGS,BUILDING_SVGS,PERSON_SVGS])
+  for(const k in o)o[k]=toneV2(o[k]);
+
 export {EVT_SVGS, BUILDING_SVGS, PERSON_SVGS, BOY_SVG, eventSVG, iconSVG, personSVG};
