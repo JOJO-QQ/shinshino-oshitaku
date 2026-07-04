@@ -7,7 +7,9 @@ import {runGenericEvent} from '../town/events.js';
 import {spawnResidents} from '../town/residentsCtrl.js';
 import {soundTask, soundComplete, speak} from '../audio.js';
 import {addBurnedHouseIssue, addPoliceRiskIssue, addHospitalNeededIssue, addTransitNeededIssue} from '../state/townIssues.js';
-import {currentSeason} from '../state/state.js';
+import {currentSeason, weatherFor, dateString} from '../state/state.js';
+import {BUILDING_NAMES} from '../assets/townSvg.js';
+import {applyQuestEvent} from '../data/quests.js';
 
 const FONT="'Hiragino Maru Gothic Pro','BIZ UDPGothic',sans-serif";
 
@@ -26,6 +28,8 @@ export class TownScene extends Phaser.Scene{
     this.spawnPlayer();
     this._unlockedWorld=Math.floor(store.state.stage/4);
     this.buildClouds();
+    this.buildStreakDecor();
+    this.buildAmbient();
     spawnResidents(this);
 
     const c=store.state.camera;
@@ -60,9 +64,49 @@ export class TownScene extends Phaser.Scene{
     if(currentSeason()!=='winter'){ // 冬は花を出さない（雪の季節感）
       FLOWERS.forEach(f=>{
         const key=f.c==='#FFB74D'?'flower_o':f.c==='#9FA8DA'?'flower_v':'flower_p';
-        this.add.image(f.x,f.y,key).setDisplaySize(44,44).setOrigin(.5,.9).setDepth(f.y);
+        const fl=this.add.image(f.x,f.y,key).setDisplaySize(44,44).setOrigin(.5,.9).setDepth(f.y);
+        this.makeTappable(fl,()=>this.tapFlower(f)); // おねがい「おはなを3つ」用
       });
     }
+  }
+
+  tapFlower(f){
+    soundTask();
+    this.sparkle(f.x,f.y-24,5);
+    const giver=applyQuestEvent(store.state,{type:'flower'});
+    save();
+    if(giver)this.time.delayedCall(600,()=>this.celebrate(giver));
+    else if(store.ui)store.ui.updateTopbar();
+  }
+
+  tapBuilding(i,spot){
+    const s=store.state;
+    if(!s.zukanSeen)s.zukanSeen={residents:[],buildings:[]};
+    if(!s.zukanSeen.buildings.includes(i))s.zukanSeen.buildings.push(i);
+    soundTask();
+    this.sparkle(spot.x,spot.y-80,6);
+    speak(BUILDING_NAMES[i]||'たてもの');
+    const label=this.add.text(spot.x,spot.y-165,BUILDING_NAMES[i]||'たてもの',{
+      fontFamily:FONT,fontSize:'26px',color:'#263238',backgroundColor:'#FFF7CC',padding:{x:14,y:7},
+    }).setOrigin(.5).setDepth(7000).setScale(0);
+    this.fx.add(label);
+    this.tweens.add({targets:label,scale:1,duration:240,ease:'Back.easeOut'});
+    this.time.delayedCall(1500,()=>{
+      this.tweens.add({targets:label,alpha:0,scale:.6,duration:200,onComplete:()=>label.destroy()});
+    });
+    const giver=applyQuestEvent(s,{type:'visit',idx:i});
+    save();
+    if(giver)this.time.delayedCall(1100,()=>this.celebrate(giver));
+    else if(store.ui)store.ui.updateTopbar();
+  }
+
+  // おねがい達成のお祝い
+  celebrate(giver){
+    soundComplete();
+    speak(`おねがい だいせいこう！${giver.name}が よろこんでいるよ。`);
+    const c=this.cameras.main;
+    this.sparkle(c.midPoint.x,c.midPoint.y-60,14);
+    if(store.ui)store.ui.updateTopbar();
   }
 
   // ── 動的レイヤー: 建物・イベント・課題マーカー ──
@@ -76,6 +120,7 @@ export class TownScene extends Phaser.Scene{
       const spot=BUILDING_SPOTS[i];
       if(s.buildings&&s.buildings[i]){
         const b=this.add.image(spot.x,spot.y,`bld_${i}`).setDisplaySize(150,150).setOrigin(.5,.86).setDepth(spot.y);
+        this.makeTappable(b,()=>this.tapBuilding(i,spot));
         this.dyn.add(b);
         if(!firstBuild&&!this._builtShown.has(i)){
           // 新しく建った建物はぽんっと登場
@@ -125,6 +170,58 @@ export class TownScene extends Phaser.Scene{
     }else{
       this.eventMarker=null;
     }
+  }
+
+  // ── streakごほうび（広場のかざり: 3日=風船 7日=虹 14日=噴水） ──
+  // 他のオブジェクトとY-sortを揃えるため、コンテナに入れず直接置く。
+  buildStreakDecor(){
+    (this.decorItems||[]).forEach(o=>{this.tweens.killTweensOf(o);o.destroy();});
+    this.decorItems=[];
+    const streak=(store.state.stamps&&store.state.stamps.streak)||0;
+    if(streak>=3){
+      [['balloon_p',1218,1248],['balloon_y',1300,1205],['balloon_b',1382,1248]].forEach(([k,x,y],i)=>{
+        const b=this.add.image(x,y,k).setDisplaySize(50,92).setOrigin(.5,.95).setDepth(y);
+        this.tweens.add({targets:b,y:y-9,angle:{from:-4,to:4},duration:1250+i*160,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+        this.decorItems.push(b);
+      });
+    }
+    if(streak>=7){
+      const r=this.add.image(1300,1140,'rainbow').setDisplaySize(350,195).setOrigin(.5,1).setDepth(1140).setAlpha(.96);
+      this.tweens.add({targets:r,y:1132,duration:2100,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+      this.decorItems.push(r);
+    }
+    if(streak>=14){
+      const f=this.add.image(1300,1272,'fountain').setDisplaySize(122,122).setOrigin(.5,.92).setDepth(1272);
+      this.decorItems.push(f);
+    }
+  }
+
+  // ── 天気・季節の空気感（画面固定パーティクル） ──
+  buildAmbient(){
+    if(this.ambient){this.ambient.destroy();this.ambient=null;}
+    const W=this.scale.width;
+    const season=currentSeason();
+    const weather=weatherFor(dateString());
+    let key=null,conf=null;
+    if(weather==='rain'&&season!=='winter'){
+      key='pt_rain';
+      conf={x:{min:0,max:W},y:-30,speedY:{min:520,max:700},speedX:{min:-50,max:-15},
+        lifespan:2200,scale:{min:.7,max:1.1},quantity:2,frequency:44};
+    }else if(season==='winter'){
+      key='pt_snow';
+      conf={x:{min:0,max:W},y:-24,speedY:{min:36,max:76},speedX:{min:-26,max:26},
+        lifespan:16000,scale:{min:.6,max:1.15},frequency:weather==='rain'?150:330};
+    }else if(season==='spring'){
+      key='pt_petal';
+      conf={x:{min:-60,max:W},y:-24,speedY:{min:42,max:88},speedX:{min:22,max:72},
+        rotate:{min:0,max:360},lifespan:15000,scale:{min:.75,max:1.25},frequency:640};
+    }else if(season==='autumn'){
+      key='pt_leaf';
+      conf={x:{min:0,max:W+60},y:-24,speedY:{min:46,max:92},speedX:{min:-72,max:-22},
+        rotate:{min:0,max:360},lifespan:15000,scale:{min:.75,max:1.25},frequency:640};
+    }
+    if(!key)return;
+    this.ambient=this.add.particles(0,0,key,conf).setScrollFactor(0).setDepth(6600);
   }
 
   spawnPlayer(){
@@ -292,6 +389,7 @@ export class TownScene extends Phaser.Scene{
     }else{
       this.buildClouds();
     }
+    this.buildStreakDecor();
     spawnResidents(this);
     if(store.ui)store.ui.updateTopbar();
   }

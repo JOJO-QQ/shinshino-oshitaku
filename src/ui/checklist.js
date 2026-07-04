@@ -2,7 +2,7 @@
 // index.html(v5) 行3514-3749 からほぼ無改変で移設。state参照をstore経由に変更。
 import {STAGES, TASKS, PART_LABELS, ALL_FALSE, SPARKS, BUILDING_EMOJIS} from '../data/stages.js';
 import {store, save} from '../store.js';
-import {defState, SAVE_KEY} from '../state/state.js';
+import {defState, SAVE_KEY, awardStamp} from '../state/state.js';
 import {getCarSVG, carLabelHTML, carInlineHTML, ALL_TRUE} from '../assets/cars.js';
 import {iconSVG} from '../assets/eventSvg.js';
 import {ensureAudio, speak, soundTask, soundAttach, soundComplete, startReminderLoop, stopReminderLoop, stopFireSound} from '../audio.js';
@@ -95,12 +95,41 @@ export function openParent(){
 // ── APPROVE & PARTS ──
 let _q=[],_willComplete=false;
 
+// がんばりカード（スタンプ）: approve成功時に月間カレンダーへポン！
+function showStampCard(proceed){
+  const st=store.state.stamps;
+  const popup=document.getElementById('stamp-popup');
+  if(!popup||!st){proceed();return;}
+  const now=new Date();
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const grid=document.getElementById('stamp-grid');
+  grid.innerHTML='';
+  for(let d=1;d<=daysInMonth;d++){
+    const cell=document.createElement('div');
+    const stamped=st.days.includes(d);
+    cell.className=`stamp-cell${stamped?(d===now.getDate()?' on today':' on'):''}`;
+    cell.textContent=stamped?'⭐':String(d);
+    grid.appendChild(cell);
+  }
+  document.getElementById('stamp-streak').textContent=`れんぞく ${st.streak}にち！`;
+  const MILESTONES=[[3,'ひろばに ふうせん'],[7,'ひろばに にじ'],[14,'きんの ふんすい'],[30,'とくべつな ともだち']];
+  const next=MILESTONES.find(m=>st.streak<m[0]);
+  document.getElementById('stamp-reward').textContent=
+    next?`あと${next[0]-st.streak}にちで ${next[1]}！`:'まちが キラキラだね！';
+  popup.classList.remove('hidden');
+  soundComplete();
+  speak(`スタンプ、ぽん！れんぞく${st.streak}にちだよ。`);
+  setTimeout(()=>{popup.classList.add('hidden');proceed();},3000);
+}
+
 export function approve(){
   ensureAudio();
   stopReminderLoop();
   const state=store.state;
   state.approvedToday=true;
-  if(state.stage>=STAGES.length){showTown();return;}
+  const stamped=awardStamp(state);
+  const finish=fn=>{save();if(stamped)showStampCard(fn);else fn();};
+  if(state.stage>=STAGES.length){finish(showTown);return;}
 
   const s=STAGES[state.stage];
   const prevEarned=[...state.earnedParts];
@@ -112,7 +141,7 @@ export function approve(){
     }
   });
 
-  if(!newPis.length){showTown();return;}
+  if(!newPis.length){finish(showTown);return;}
 
   const newEarned=[...prevEarned];
   newPis.forEach(pi=>newEarned[pi]=true);
@@ -134,7 +163,7 @@ export function approve(){
     return{id:s.id,name:s.parts[pi],idx:pi,dots:[...dotsAcc],color:s.color,isSpecial:pi===4};
   });
   _willComplete=willComplete;
-  nextPart();
+  finish(nextPart);
 }
 
 function nextPart(){

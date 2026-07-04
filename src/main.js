@@ -48,3 +48,11 @@ store.game=new Phaser.Game({
   scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},
   scene:[BootScene,TownScene],
 });
+
+// ヒーロー領域のDOM（おねがいカード等）が増減すると #phaser-town の高さが変わるが、
+// Phaserは親要素のサイズ変化を自動検知しないので、こちらから追従させる。
+// 高さ0（画面切替でdisplay:none）のときはrefreshしない（WebGLが壊れるため）。
+const townEl=document.getElementById('phaser-town');
+new ResizeObserver(()=>{
+  if(store.game&&townEl.offsetWidth>0&&townEl.offsetHeight>0)store.game.scale.refresh();
+}).observe(townEl);

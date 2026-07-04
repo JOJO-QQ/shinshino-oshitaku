@@ -3,7 +3,8 @@ import {STAGES} from '../data/stages.js';
 import {RESIDENTS} from '../data/residents.js';
 import {getCarSVG, ALL_TRUE} from '../assets/cars.js';
 import {EVT_SVGS, BUILDING_SVGS, BOY_SVG} from '../assets/eventSvg.js';
-import {SEASON_PALETTES, grassTile, roadTile, treeSVG, flowerSVG, cloudSVG, lotSVG, ringSVG, buildingSVG} from '../assets/townSvg.js';
+import {SEASON_PALETTES, grassTile, roadTile, treeSVG, flowerSVG, cloudSVG, lotSVG, ringSVG, buildingSVG,
+  balloonSVG, rainbowSVG, fountainSVG, petalSVG, leafFallSVG, snowflakeSVG, raindropSVG} from '../assets/townSvg.js';
 import {animalSVG} from '../assets/peopleSvg.js';
 import {queueSvg, releaseSvgUrls} from '../assets/textures.js';
 import {currentSeason} from '../state/state.js';
@@ -43,8 +44,20 @@ export class BootScene extends Phaser.Scene{
     // 建物20種（ステージごとに固有デザイン）
     STAGES.forEach((s,i)=>queueSvg(this,`bld_${i}`,buildingSVG(i),120,120));
 
-    // 住人12体
+    // 住人12体 + レア住人（30日streak）
     RESIDENTS.forEach(r=>queueSvg(this,`res_${r.id}`,animalSVG(r.species,r.c),80,100));
+    queueSvg(this,'res_kirari',animalSVG('bird',{fur:'#FFE082',dark:'#F3B94D',shirt:'#FFD65C'}),80,100);
+
+    // streakごほうび + 天気パーティクル
+    queueSvg(this,'balloon_p',balloonSVG('#FF7A9A'),60,110);
+    queueSvg(this,'balloon_y',balloonSVG('#FFE66D'),60,110);
+    queueSvg(this,'balloon_b',balloonSVG('#7EC8F5'),60,110);
+    queueSvg(this,'rainbow',rainbowSVG(),160,90);
+    queueSvg(this,'fountain',fountainSVG(),120,120);
+    queueSvg(this,'pt_petal',petalSVG(),24,24);
+    queueSvg(this,'pt_leaf',leafFallSVG(),24,24);
+    queueSvg(this,'pt_snow',snowflakeSVG(),24,24);
+    queueSvg(this,'pt_rain',raindropSVG(),10,30);
 
     // イベント/課題アイコン（SVGがある絵文字キーのみ。無いものは表示時にTextで代替）
     const iconKeys=new Set();

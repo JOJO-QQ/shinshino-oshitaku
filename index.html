@@ -15,7 +15,10 @@
     .screen.active { display: flex; flex-direction: column; }
 
     /* MAP */
-    #screen-map { background: #87CEEB; }
+    /* Phaserキャンバスを「残りの高さ」にぴったり収めるため、この画面だけ高さ固定。
+       min-heightのままだとDOM（おねがいカード等）が増えたときに画面が縦に伸びて
+       キャンバスの下側が画面外にはみ出す。 */
+    #screen-map { background: #87CEEB; height: 100vh; height: 100dvh; max-height: 100dvh; overflow: hidden; }
     .map-topbar { background: rgba(0,0,0,.32); backdrop-filter: blur(8px); padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .tb-info { flex: 1 1 0; min-width: 0; }
     .tb-car { font-size: 20px; font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display:flex; align-items:center; gap:8px; min-width:0; }
@@ -357,6 +360,27 @@
     /* Phaser town canvas (v6) */
     #phaser-town { flex: 1; position: relative; overflow: hidden; min-height: 0; }
     #phaser-town canvas { display: block; }
+
+    /* QUEST CARD（きょうのおねがい） */
+    .quest-card { margin-top: 10px; display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 16px; padding: 8px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.14); color: #2F3A3D; }
+    .quest-card.hidden { display: none; }
+    .quest-card.done { background: #F0FFF4; box-shadow: inset 0 0 0 3px #4CAF50; }
+    .quest-icon { width: 38px; height: 46px; flex: 0 0 auto; }
+    .quest-icon svg { width: 100%; height: 100%; display: block; }
+    .quest-text { flex: 1; min-width: 0; font-size: 14px; font-weight: bold; line-height: 1.35; }
+    .quest-check { width: 30px; height: 30px; border-radius: 50%; background: #4CAF50; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; flex: 0 0 auto; }
+    .quest-check.hidden { display: none; }
+
+    /* STAMP CARD（がんばりカード） */
+    .stamp-box { background: #FFF7E6; color: #5C4A2E; }
+    .stamp-title { font-size: 24px; font-weight: bold; color: #E07B2A; margin-bottom: 6px; }
+    .stamp-streak { font-size: 17px; font-weight: bold; color: #5C4A2E; margin-bottom: 4px; }
+    .stamp-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin: 12px 0 10px; }
+    .stamp-cell { aspect-ratio: 1; border-radius: 50%; background: rgba(224,123,42,.12); display: flex; align-items: center; justify-content: center; font-size: 12px; color: rgba(92,74,46,.55); font-weight: bold; }
+    .stamp-cell.on { background: #FFE66D; font-size: 17px; }
+    .stamp-cell.today { background: #FFD65C; font-size: 19px; box-shadow: 0 0 14px rgba(255,214,92,.95); animation: stampPop .55s cubic-bezier(.34,1.56,.64,1) both; animation-delay: .45s; }
+    @keyframes stampPop { 0%{transform:scale(0)} 70%{transform:scale(1.45)} 100%{transform:scale(1)} }
+    .stamp-reward { font-size: 14px; font-weight: bold; color: #A5814F; }
   </style>
 </head>
 <body>
@@ -389,12 +413,27 @@
         <div class="event-guide-body" id="event-guide-body"></div>
       </div>
     </div>
+    <div class="quest-card hidden" id="quest-card">
+      <div class="quest-icon" id="quest-icon"></div>
+      <div class="quest-text" id="quest-text"></div>
+      <div class="quest-check hidden" id="quest-check">✓</div>
+    </div>
     <div class="nearby-panel hidden" id="nearby-panel">
       <div class="nearby-title">おこっていること</div>
       <div class="nearby-list" id="nearby-list"></div>
     </div>
   </div>
   <div id="phaser-town"></div>
+</div>
+
+<!-- STAMP CARD -->
+<div class="popup-overlay hidden" id="stamp-popup">
+  <div class="popup-box stamp-box">
+    <div class="stamp-title">⭐ がんばりカード ⭐</div>
+    <div class="stamp-streak" id="stamp-streak"></div>
+    <div class="stamp-grid" id="stamp-grid"></div>
+    <div class="stamp-reward" id="stamp-reward"></div>
+  </div>
 </div>
 
 <!-- GARAGE -->

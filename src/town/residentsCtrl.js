@@ -3,6 +3,7 @@
 // 友好度は1日1回だけ上がる（v6 state.residents に記録）。
 
 import {activeResidents} from '../data/residents.js';
+import {applyQuestEvent} from '../data/quests.js';
 import {BUILDING_SPOTS} from '../data/townLayout.js';
 import {store, save} from '../store.js';
 import {dateString} from '../state/state.js';
@@ -11,12 +12,17 @@ import {isTap} from './camera.js';
 
 const FONT="'Hiragino Maru Gothic Pro','BIZ UDPGothic',sans-serif";
 
+// 30日streakのごほうび: 広場にあらわれる特別なともだち
+const KIRARI={id:'kirari',name:'きらり',species:'bird',stageIdx:-1,
+  lines:['まいにち がんばってて すごいね！','いっしょにいると きらきらしちゃう！']};
+
 export function spawnResidents(scene){
   if(scene.residentGroup)scene.residentGroup.destroy(true);
   scene.residentGroup=scene.add.container(0,0);
   const today=dateString();
-  activeResidents(store.state,today).forEach(r=>{
-    const home=BUILDING_SPOTS[r.stageIdx];
+  const roster=activeResidents(store.state,today).map(r=>({r,home:BUILDING_SPOTS[r.stageIdx]}));
+  if(((store.state.stamps&&store.state.stamps.streak)||0)>=30)roster.push({r:KIRARI,home:{x:1300,y:1440}});
+  roster.forEach(({r,home})=>{
     if(!home)return;
     const x=home.x+Phaser.Math.Between(-90,90);
     const y=home.y+Phaser.Math.Between(30,100);
@@ -69,7 +75,9 @@ function greet(scene,sp){
   s.residents[r.id]=rec;
   if(!s.zukanSeen)s.zukanSeen={residents:[],buildings:[]};
   if(!s.zukanSeen.residents.includes(r.id))s.zukanSeen.residents.push(r.id);
+  const questGiver=applyQuestEvent(s,{type:'talk',id:r.id}); // おねがい「○○とおはなし」
   save();
+  if(questGiver)scene.time.delayedCall(1800,()=>scene.celebrate(questGiver));
 
   const line=firstMeet
     ?`こんにちは！${r.name}だよ！`

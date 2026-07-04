@@ -284,3 +284,54 @@ export function buildingSVG(stageIdx){
 
 // 図鑑・完成演出用の建物名
 export const BUILDING_NAMES=['おうち','けいさつしょ','びょういん','タクシーのりば','けんせつじむしょ','こうじょう','オフィスビル','デパート','がっこう','ぎんこう','ゆうびんきょく','リサイクルセンター','はくぶつかん','スケートリンク','こうえん','でんきや','おしろ','ガソリンスタンド','だいがく','すいぞくかん'];
+
+// ── streakごほうび（広場のかざり） ──────────────────────────────
+// 3日=風船 / 7日=虹 / 14日=金の噴水（TownSceneが streak に応じて広場に置く）
+
+export function balloonSVG(color='#FF7A9A'){
+  return `<svg viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
+<path d="M30 62 Q26 80 30 104" fill="none" stroke="${OUTLINE}" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="30" cy="32" rx="24" ry="29" fill="${color}" stroke="${OUTLINE}" stroke-width="4"/>
+<path d="M24 60 L30 68 L36 60 Z" fill="${color}" stroke="${OUTLINE}" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="21" cy="22" rx="7" ry="10" fill="#FFFFFF" opacity=".4"/></svg>`;
+}
+
+export function rainbowSVG(){
+  const bands=[['#F15B64',56],['#FFB74D',48],['#FFE66D',40],['#74B86F',32],['#5F87D8',24]];
+  return `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+${bands.map(([c,r])=>`<path d="M${80-r} 84 A${r} ${r} 0 0 1 ${80+r} 84" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`).join('')}
+<ellipse cx="22" cy="82" rx="16" ry="10" fill="#FFFFFF" opacity=".95"/>
+<ellipse cx="138" cy="82" rx="16" ry="10" fill="#FFFFFF" opacity=".95"/></svg>`;
+}
+
+export function fountainSVG(){
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<ellipse cx="60" cy="110" rx="46" ry="8" fill="rgba(0,0,0,.14)"/>
+<path d="M18 92 Q18 78 32 78 H88 Q102 78 102 92 Q102 108 60 108 Q18 108 18 92Z" fill="#FFD65C" stroke="${OUTLINE}" stroke-width="4"/>
+<ellipse cx="60" cy="82" rx="34" ry="9" fill="#7EC8F5" stroke="${OUTLINE}" stroke-width="3"/>
+<rect x="52" y="46" width="16" height="34" rx="6" fill="#F3B94D" stroke="${OUTLINE}" stroke-width="4"/>
+<path d="M60 40 Q46 26 38 42 M60 40 Q74 26 82 42 M60 38 V24" fill="none" stroke="#7EC8F5" stroke-width="6" stroke-linecap="round"/>
+<circle cx="38" cy="46" r="4" fill="#A7D7F9"/><circle cx="82" cy="46" r="4" fill="#A7D7F9"/><circle cx="60" cy="19" r="5" fill="#A7D7F9"/>
+<circle cx="60" cy="44" r="7" fill="#FFE66D" stroke="${OUTLINE}" stroke-width="3"/></svg>`;
+}
+
+// ── 天気・季節パーティクル用の小さなかけら ──────────────────────
+export function petalSVG(){
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<ellipse cx="12" cy="12" rx="9" ry="6" fill="#F9BBD0" transform="rotate(-24 12 12)"/>
+<ellipse cx="10" cy="10" rx="4" ry="2.5" fill="#FCE0EA" transform="rotate(-24 12 12)"/></svg>`;
+}
+export function leafFallSVG(){
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 18 Q4 6 20 4 Q20 16 8 20 Z" fill="#E5953F"/>
+<path d="M6 18 Q12 12 18 6" fill="none" stroke="#C97430" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+}
+export function snowflakeSVG(){
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="8" fill="#FFFFFF" opacity=".95"/>
+<circle cx="12" cy="12" r="4.5" fill="#EAF4FB"/></svg>`;
+}
+export function raindropSVG(){
+  return `<svg viewBox="0 0 10 30" xmlns="http://www.w3.org/2000/svg">
+<path d="M5 2 L5 28" stroke="#7EC8F5" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`;
+}

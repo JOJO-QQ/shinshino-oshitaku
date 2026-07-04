@@ -7,6 +7,8 @@ import {dateString, encodeStateForUrl} from '../state/state.js';
 import {hasVehicle} from '../state/townIssues.js';
 import {getCarSVG, carLabelHTML, ALL_TRUE} from '../assets/cars.js';
 import {eventSVG, iconSVG} from '../assets/eventSvg.js';
+import {animalSVG} from '../assets/peopleSvg.js';
+import {ensureDailyQuest, questText, questGiver} from '../data/quests.js';
 import {ensureAudio, speak, soundPrep, updateSoundButton, startFireSound} from '../audio.js';
 import {openChecklist} from './checklist.js';
 
@@ -55,7 +57,7 @@ export function updateTopbar(){
   if(!s){
     document.getElementById('tb-car').innerHTML=`${iconSVG('✅','tb-car-icon')}<span>ぜんぶクリア！</span>`;
     document.getElementById('tb-pts').textContent='20だい ぜんしゅうしゅう！';
-    const btn=document.getElementById('hero-btn');btn.className='hero-btn done';btn.innerHTML=`${iconSVG('✅','btn-icon')}ぜんぶおわり！`;updateEventGuide();renderNearbyCards();return;
+    const btn=document.getElementById('hero-btn');btn.className='hero-btn done';btn.innerHTML=`${iconSVG('✅','btn-icon')}ぜんぶおわり！`;updateEventGuide();renderNearbyCards();updateQuestCard();return;
   }
   const earned=state.earnedParts.filter(v=>v).length;
   document.getElementById('tb-car').innerHTML=carLabelHTML(s);
@@ -70,6 +72,7 @@ export function updateTopbar(){
   }
   updateEventGuide();
   renderNearbyCards();
+  updateQuestCard();
 
   const preview=document.getElementById('map-parts-preview');
   const carSvgEl=document.getElementById('map-car-svg');
@@ -84,6 +87,24 @@ export function updateTopbar(){
     d.className=`pd-dot${state.earnedParts[i]?(i===4?' bonus':' on'):''}`;
     dotsRow.appendChild(d);
   }
+}
+
+// ── きょうのおねがいカード ──
+export function updateQuestCard(){
+  const card=document.getElementById('quest-card');
+  if(!card)return;
+  const state=store.state;
+  const before=state.quest?state.quest.id:null;
+  ensureDailyQuest(state);
+  if((state.quest?state.quest.id:null)!==before)save();
+  const q=state.quest;
+  if(!q){card.classList.add('hidden');return;}
+  card.classList.remove('hidden');
+  card.classList.toggle('done',!!q.done);
+  const g=questGiver(q);
+  document.getElementById('quest-icon').innerHTML=g?animalSVG(g.species,g.c):'';
+  document.getElementById('quest-text').textContent=questText(q);
+  document.getElementById('quest-check').classList.toggle('hidden',!q.done);
 }
 
 // ── ヒーローボタン ──
