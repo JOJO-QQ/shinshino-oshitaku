@@ -75,18 +75,26 @@ const BUILDING_SVGS={
 };
 
 const BOY_SVG=`<svg viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-<ellipse cx="40" cy="91" rx="23" ry="4" fill="rgba(0,0,0,.18)"/>
-<path d="M18 32 Q18 13 40 10 Q62 13 62 32 L62 45 Q62 67 40 67 Q18 67 18 45Z" fill="#F7C58F" stroke="#3A2417" stroke-width="3"/>
-<path d="M18 34 Q18 12 40 9 Q60 11 65 29 Q58 21 48 20 Q40 30 25 28 Q21 31 18 34Z" fill="#4A2A18" stroke="#3A2417" stroke-width="3" stroke-linejoin="round"/>
-<path d="M28 17 Q22 22 20 32 Q31 28 36 20 Q31 21 28 17Z" fill="#6B3D22"/>
-<circle cx="27" cy="43" r="3.5" fill="#2B1A12"/>
-<circle cx="53" cy="43" r="3.5" fill="#2B1A12"/>
-<circle cx="23" cy="49" r="5" fill="#F09A9A" opacity=".55"/>
-<circle cx="57" cy="49" r="5" fill="#F09A9A" opacity=".55"/>
-<path d="M31 55 Q40 62 49 55" fill="none" stroke="#7A2E1D" stroke-width="3" stroke-linecap="round"/>
-<path d="M40 45 Q37 49 41 50" fill="none" stroke="#C88455" stroke-width="2" stroke-linecap="round"/>
-<rect x="23" y="66" width="34" height="22" rx="10" fill="#4FC3F7" stroke="#1A1A1A" stroke-width="3"/>
-<path d="M24 73 Q40 82 56 73" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="3" stroke-linecap="round"/>
+<defs>
+<radialGradient id="boyv2f" cx=".4" cy=".34" r=".9">
+<stop offset="0" stop-color="#FBD9AE"/><stop offset=".7" stop-color="#F2C08B"/><stop offset="1" stop-color="#DBA46C"/></radialGradient>
+<linearGradient id="boyv2s" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#8AD4F5"/><stop offset="1" stop-color="#4FAEE0"/></linearGradient>
+<filter id="boyv2b" x="-45%" y="-45%" width="190%" height="190%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<ellipse cx="40" cy="91" rx="23" ry="5" fill="#2F5E2A" opacity=".32" filter="url(#boyv2b)"/>
+<rect x="23" y="62" width="34" height="26" rx="12" fill="url(#boyv2s)" stroke="#2E7FA8" stroke-width="3.5"/>
+<path d="M26 70 Q40 77 54 70" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+<ellipse cx="31" cy="90" rx="6.5" ry="4.5" fill="#F2C08B" stroke="#8A5A33" stroke-width="3"/>
+<ellipse cx="49" cy="90" rx="6.5" ry="4.5" fill="#F2C08B" stroke="#8A5A33" stroke-width="3"/>
+<circle cx="40" cy="36" r="27" fill="url(#boyv2f)" stroke="#8A5A33" stroke-width="4"/>
+<path d="M13 33 Q18 6 40 6 Q62 6 67 33 Q54 19 41 21 Q26 17 13 33Z" fill="#5A3A22" stroke="#3E2917" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M22 15 Q32 9 43 11" stroke="#7A5232" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>
+<circle cx="30" cy="40" r="3.5" fill="#2B1A12"/><circle cx="31.4" cy="38.6" r="1.3" fill="#fff"/>
+<circle cx="50" cy="40" r="3.5" fill="#2B1A12"/><circle cx="51.4" cy="38.6" r="1.3" fill="#fff"/>
+<path d="M33 50 Q40 56 47 50" fill="none" stroke="#8A4A2A" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="21" cy="46" rx="5" ry="4" fill="#F09A9A" opacity=".6"/>
+<ellipse cx="59" cy="46" rx="5" ry="4" fill="#F09A9A" opacity=".6"/>
 </svg>`;
 
 const PERSON_SVGS={

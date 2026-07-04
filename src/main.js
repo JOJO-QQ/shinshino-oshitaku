@@ -45,7 +45,7 @@ overlay.updateTopbar();
 store.game=new Phaser.Game({
   type:Phaser.AUTO,
   parent:'phaser-town',
-  backgroundColor:'#A8D98A',
+  backgroundColor:'#7DB65C',
   scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},
   scene:[BootScene,TownScene],
 });

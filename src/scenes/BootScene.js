@@ -29,10 +29,10 @@ export class BootScene extends Phaser.Scene{
     queueSvg(this,'road_v',roadTile('v',pal),200,200);
     queueSvg(this,'road_x',roadTile('x',pal),200,200);
     queueSvg(this,'plaza',roadTile('plaza',pal),200,200);
-    queueSvg(this,'tree',treeSVG(pal.leaf,pal.leafDark,pal.blossom,pal.snow),140,170);
-    queueSvg(this,'flower_p',flowerSVG('#F49AC1'),60,60);
-    queueSvg(this,'flower_o',flowerSVG('#FFB74D'),60,60);
-    queueSvg(this,'flower_v',flowerSVG('#9FA8DA'),60,60);
+    queueSvg(this,'tree',treeSVG(pal),140,170);
+    queueSvg(this,'flower_p',flowerSVG('#EE8DB4','#FBD5E4'),60,60);
+    queueSvg(this,'flower_o',flowerSVG('#F5A23C','#FFDFA6'),60,60);
+    queueSvg(this,'flower_v',flowerSVG('#9FA8DA','#D6DBF5'),60,60);
     queueSvg(this,'cloud',cloudSVG(),300,180);
     queueSvg(this,'lot',lotSVG(),120,110);
     queueSvg(this,'ring',ringSVG(),160,160);
