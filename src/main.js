@@ -21,6 +21,7 @@ store.ui={
 // HTMLのonclick属性から呼ばれる関数をグローバルに公開
 Object.assign(window,{
   openGarage:checklist.openGarage,
+  setGarTab:checklist.setGarTab,
   openParent:checklist.openParent,
   approve:checklist.approve,
   testNextDay:checklist.testNextDay,

@@ -1,10 +1,13 @@
 // ── 教育コア（したく・親確認・パーツ・完成・ガレージ） ─────────
 // index.html(v5) 行3514-3749 からほぼ無改変で移設。state参照をstore経由に変更。
 import {STAGES, TASKS, PART_LABELS, ALL_FALSE, SPARKS, BUILDING_EMOJIS} from '../data/stages.js';
+import {RESIDENTS} from '../data/residents.js';
 import {store, save} from '../store.js';
 import {defState, SAVE_KEY, awardStamp} from '../state/state.js';
 import {getCarSVG, carLabelHTML, carInlineHTML, ALL_TRUE} from '../assets/cars.js';
 import {iconSVG} from '../assets/eventSvg.js';
+import {animalSVG} from '../assets/peopleSvg.js';
+import {buildingSVG, BUILDING_NAMES} from '../assets/townSvg.js';
 import {ensureAudio, speak, soundTask, soundAttach, soundComplete, startReminderLoop, stopReminderLoop, stopFireSound} from '../audio.js';
 import {showScreen, showTown} from './overlay.js';
 
@@ -213,11 +216,30 @@ function showComplete(s){
   for(let i=0;i<22;i++)setTimeout(randSpark,i*65);
 }
 
-// ── GARAGE ──
+// ── GARAGE（図鑑3タブ: くるま・じゅうにん・たてもの） ──
+let _garTab='cars';
+
 export function openGarage(){
-  const state=store.state;
-  document.getElementById('gar-sub').textContent=`${state.stage} / ${STAGES.length} だいしゅうしゅう！`;
+  renderGarage();
+  showScreen('screen-garage');
+}
+
+export function setGarTab(tab){
+  _garTab=tab;
+  renderGarage();
+}
+
+function renderGarage(){
+  document.querySelectorAll('.gar-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===_garTab));
   const grid=document.getElementById('gar-grid');grid.innerHTML='';
+  if(_garTab==='cars')renderGarCars(grid);
+  else if(_garTab==='residents')renderGarResidents(grid);
+  else renderGarBuildings(grid);
+}
+
+function renderGarCars(grid){
+  const state=store.state;
+  document.getElementById('gar-sub').textContent=`くるま ${state.stage} / ${STAGES.length} だい`;
   STAGES.forEach((s,i)=>{
     const owned=i<state.stage;
     const cell=document.createElement('div');cell.className=`gar-cell ${owned?'owned':'locked'}`;
@@ -231,7 +253,53 @@ export function openGarage(){
     }
     grid.appendChild(cell);
   });
-  showScreen('screen-garage');
+}
+
+function renderGarResidents(grid){
+  const state=store.state;
+  const met=r=>!!(state.residents&&state.residents[r.id]);
+  const count=RESIDENTS.filter(met).length;
+  document.getElementById('gar-sub').textContent=`ともだち ${count} / ${RESIDENTS.length} にん`;
+  RESIDENTS.forEach(r=>{
+    const known=met(r);
+    const rec=known?state.residents[r.id]:null;
+    const cell=document.createElement('div');
+    cell.className=`gar-cell owned`;
+    if(known){
+      cell.innerHTML=`<div class="gar-cell-svg">${animalSVG(r.species,r.c)}</div><span class="cn">${r.name}</span><span class="hearts">${'❤️'.repeat(Math.min(rec.friendship||1,5))}</span>`;
+      cell.addEventListener('click',()=>showResidentDetail(r));
+    }else{
+      cell.innerHTML=`<div class="gar-cell-svg zukan-sil">${animalSVG(r.species,r.c)}</div><span class="cn">？？？</span><span class="hearts">まだあってない</span>`;
+    }
+    grid.appendChild(cell);
+  });
+  // 30日streakの特別なともだち（会えた人だけ図鑑に載る）
+  if(state.residents&&state.residents.kirari){
+    const cell=document.createElement('div');
+    cell.className='gar-cell owned';
+    cell.style.boxShadow='0 0 0 3px #FFD65C, 0 3px 10px rgba(95,135,161,.12)';
+    cell.innerHTML=`<div class="gar-cell-svg">${animalSVG('bird',{fur:'#FFE082',dark:'#F3B94D',shirt:'#FFD65C'})}</div><span class="cn">きらり ⭐</span><span class="hearts">${'❤️'.repeat(Math.min(state.residents.kirari.friendship||1,5))}</span>`;
+    grid.appendChild(cell);
+  }
+}
+
+function renderGarBuildings(grid){
+  const state=store.state;
+  const built=i=>!!(state.buildings&&state.buildings[i]);
+  const count=STAGES.map((_,i)=>i).filter(built).length;
+  document.getElementById('gar-sub').textContent=`たてもの ${count} / ${STAGES.length} けん`;
+  STAGES.forEach((s,i)=>{
+    const has=built(i);
+    const cell=document.createElement('div');
+    cell.className='gar-cell owned';
+    if(has){
+      cell.innerHTML=`<div class="gar-cell-svg">${buildingSVG(i)}</div><span class="cn">${BUILDING_NAMES[i]}</span>`;
+      cell.addEventListener('click',()=>showBuildingDetail(i));
+    }else{
+      cell.innerHTML=`<div class="gar-cell-svg zukan-sil">${buildingSVG(i)}</div><span class="cn">？？？</span>`;
+    }
+    grid.appendChild(cell);
+  });
 }
 
 function showCarDetail(i){
@@ -244,6 +312,26 @@ function showCarDetail(i){
   document.getElementById('cdp-title').innerHTML=`${carInlineHTML(s)} かんせい！`;
   document.getElementById('cdp-body').textContent=hasBldg?'このくるまが まちにたてものをつくった！':'イベントをクリアすると まちにたてものができるよ！';
   document.getElementById('car-detail-popup').classList.remove('hidden');
+}
+
+function showResidentDetail(r){
+  const rec=store.state.residents[r.id]||{friendship:1};
+  document.getElementById('cdp-bldg').innerHTML='';
+  document.getElementById('cdp-svg').innerHTML=animalSVG(r.species,r.c);
+  document.getElementById('cdp-title').textContent=r.name;
+  document.getElementById('cdp-body').innerHTML=`${'❤️'.repeat(Math.min(rec.friendship||1,5))}<br>「${r.lines[0]}」`;
+  document.getElementById('car-detail-popup').classList.remove('hidden');
+  speak(`${r.name}だよ。`);
+}
+
+function showBuildingDetail(i){
+  const s=STAGES[i];
+  document.getElementById('cdp-bldg').innerHTML='';
+  document.getElementById('cdp-svg').innerHTML=buildingSVG(i);
+  document.getElementById('cdp-title').textContent=BUILDING_NAMES[i];
+  document.getElementById('cdp-body').innerHTML=`${carInlineHTML(s)}が つくったよ！`;
+  document.getElementById('car-detail-popup').classList.remove('hidden');
+  speak(BUILDING_NAMES[i]);
 }
 
 // ── RESET ──

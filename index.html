@@ -177,6 +177,12 @@
     .gar-actions .btn { margin:0; border-radius:16px; font-size:15px; padding:13px 10px; box-shadow:none; }
     .gar-actions .btn-ghost { background:#fff; color:#4D7080; }
     .gar-actions .btn-ghostw { background:#5F87A1; color:#fff; }
+    .gar-tabs { display: flex; gap: 8px; padding: 12px 16px 0; background: #D9EFFB; }
+    .gar-tab { flex: 1; border: none; border-radius: 14px 14px 0 0; padding: 13px 6px; font-family: inherit; font-size: 15px; font-weight: bold; background: rgba(255,255,255,.45); color: #4D7080; cursor: pointer; }
+    .gar-tab.active { background: #EAF6FF; color: #2F3A3D; box-shadow: 0 -2px 6px rgba(95,135,161,.18); }
+    .zukan-sil svg { filter: brightness(0) opacity(.28); }
+    .gar-cell .hearts { font-size: 11px; margin-top: 2px; letter-spacing: 1px; }
+    .zukan-meter { grid-column: 1/-1; text-align: center; font-size: 13px; font-weight: bold; color: #5F87A1; padding: 2px 0 4px; }
     .gar-grid  { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 14px 16px 16px; flex: 1; overflow-y: auto; align-content: start; background:#EAF6FF; }
     .gar-cell  { aspect-ratio: 1; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 2px solid rgba(95,135,161,.22); box-shadow: 0 3px 10px rgba(95,135,161,.12); overflow:hidden; }
     .gar-cell.owned  { aspect-ratio: auto; min-height: 136px; padding: 10px 8px 8px; background: #fff; border-color: rgba(95,135,161,.38); cursor: pointer; }
@@ -446,6 +452,11 @@
     <button class="btn btn-ghost" onclick="showMap()">もどる</button>
     <button class="btn btn-ghostw" onclick="copyShareUrl()">🔗 記録URLをコピー</button>
     <div class="share-note">別のブラウザで同じ記録を開くときだけ使います</div>
+  </div>
+  <div class="gar-tabs">
+    <button class="gar-tab active" data-tab="cars" onclick="setGarTab('cars')">くるま</button>
+    <button class="gar-tab" data-tab="residents" onclick="setGarTab('residents')">じゅうにん</button>
+    <button class="gar-tab" data-tab="buildings" onclick="setGarTab('buildings')">たてもの</button>
   </div>
   <div class="gar-grid" id="gar-grid"></div>
   <div class="gar-foot">

@@ -7,12 +7,27 @@ export function isTap(pointer){
   return pointer.getDistance()<TAP_DIST&&(pointer.upTime-pointer.downTime)<TAP_MS;
 }
 
+const MIN_ZOOM=.55, MAX_ZOOM=1.8;
+
 export function setupCamera(scene,worldW,worldH){
   const cam=scene.cameras.main;
   cam.setBounds(0,0,worldW,worldH);
+  scene.input.addPointer(1); // 2本指ピンチ用
   let dragging=false,lx=0,ly=0,vx=0,vy=0;
+  let pinching=false,pinchDist=0,pinchZoom=1;
+  const p1=scene.input.pointer1,p2=scene.input.pointer2;
+
   scene.input.on('pointerdown',p=>{dragging=true;lx=p.x;ly=p.y;vx=0;vy=0;});
   scene.input.on('pointermove',p=>{
+    // 2本指: ピンチズーム
+    if(p1.isDown&&p2.isDown){
+      const d=Phaser.Math.Distance.Between(p1.x,p1.y,p2.x,p2.y);
+      if(!pinching){pinching=true;pinchDist=d;pinchZoom=cam.zoom;}
+      else if(pinchDist>0)cam.setZoom(Phaser.Math.Clamp(pinchZoom*d/pinchDist,MIN_ZOOM,MAX_ZOOM));
+      dragging=false;vx=0;vy=0;
+      return;
+    }
+    if(pinching)return; // ピンチ後、指が1本残っている間はドラッグしない
     if(!dragging||!p.isDown)return;
     const dx=p.x-lx,dy=p.y-ly;
     lx=p.x;ly=p.y;
@@ -20,11 +35,18 @@ export function setupCamera(scene,worldW,worldH){
     cam.scrollY-=dy/cam.zoom;
     vx=dx;vy=dy;
   });
-  const stop=()=>{dragging=false;};
+  const stop=()=>{
+    dragging=false;
+    if(!p1.isDown&&!p2.isDown)pinching=false;
+  };
   scene.input.on('pointerup',stop);
   scene.input.on('pointerupoutside',stop);
+  // PC: ホイールでもズームできる
+  scene.input.on('wheel',(p,objs,dx,dy)=>{
+    cam.setZoom(Phaser.Math.Clamp(cam.zoom-dy*.0011,MIN_ZOOM,MAX_ZOOM));
+  });
   scene.events.on('update',()=>{
-    if(dragging)return;
+    if(dragging||pinching)return;
     if(Math.abs(vx)<.4&&Math.abs(vy)<.4){vx=0;vy=0;return;}
     vx*=.93;vy*=.93;   // 慣性の減衰
     cam.scrollX-=vx/cam.zoom;
