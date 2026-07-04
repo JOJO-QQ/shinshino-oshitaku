@@ -1,30 +1,34 @@
 // ── BootScene: 全SVGをテクスチャ化 + ロード進捗 ────────────────
-import {STAGES, BUILDING_EMOJIS} from '../data/stages.js';
+import {STAGES} from '../data/stages.js';
+import {RESIDENTS} from '../data/residents.js';
 import {getCarSVG, ALL_TRUE} from '../assets/cars.js';
 import {EVT_SVGS, BUILDING_SVGS, BOY_SVG} from '../assets/eventSvg.js';
-import {grassTile, roadTile, treeSVG, flowerSVG, cloudSVG, lotSVG, ringSVG} from '../assets/townSvg.js';
+import {SEASON_PALETTES, grassTile, roadTile, treeSVG, flowerSVG, cloudSVG, lotSVG, ringSVG, buildingSVG} from '../assets/townSvg.js';
+import {animalSVG} from '../assets/peopleSvg.js';
 import {queueSvg, releaseSvgUrls} from '../assets/textures.js';
+import {currentSeason} from '../state/state.js';
 
 export class BootScene extends Phaser.Scene{
   constructor(){super('Boot');}
 
   preload(){
     const W=this.scale.width,H=this.scale.height;
-    this.cameras.main.setBackgroundColor('#A8D98A');
+    const pal=SEASON_PALETTES[currentSeason()];
+    this.cameras.main.setBackgroundColor(pal.sky);
     const barBg=this.add.rectangle(W/2,H/2,W*.6,14,0xffffff,.4).setOrigin(.5);
     const bar=this.add.rectangle(W/2-W*.3,H/2,4,14,0xffffff).setOrigin(0,.5);
     this.add.text(W/2,H/2-40,'まちをつくっているよ…',{fontFamily:'sans-serif',fontSize:'20px',color:'#2F3A3D'}).setOrigin(.5);
     this.load.on('progress',v=>{bar.width=Math.max(4,W*.6*v);});
 
-    // 地面・道路・自然
-    queueSvg(this,'grass0',grassTile(0),200,200);
-    queueSvg(this,'grass1',grassTile(1),200,200);
-    queueSvg(this,'grass2',grassTile(2),200,200);
-    queueSvg(this,'road_h',roadTile('h'),200,200);
-    queueSvg(this,'road_v',roadTile('v'),200,200);
-    queueSvg(this,'road_x',roadTile('x'),200,200);
-    queueSvg(this,'plaza',roadTile('plaza'),200,200);
-    queueSvg(this,'tree',treeSVG(),140,170);
+    // 地面・道路・自然（季節パレットで色が変わる）
+    queueSvg(this,'grass0',grassTile(0,pal),200,200);
+    queueSvg(this,'grass1',grassTile(1,pal),200,200);
+    queueSvg(this,'grass2',grassTile(2,pal),200,200);
+    queueSvg(this,'road_h',roadTile('h',pal),200,200);
+    queueSvg(this,'road_v',roadTile('v',pal),200,200);
+    queueSvg(this,'road_x',roadTile('x',pal),200,200);
+    queueSvg(this,'plaza',roadTile('plaza',pal),200,200);
+    queueSvg(this,'tree',treeSVG(pal.leaf,pal.leafDark,pal.blossom,pal.snow),140,170);
     queueSvg(this,'flower_p',flowerSVG('#F49AC1'),60,60);
     queueSvg(this,'flower_o',flowerSVG('#FFB74D'),60,60);
     queueSvg(this,'flower_v',flowerSVG('#9FA8DA'),60,60);
@@ -36,11 +40,11 @@ export class BootScene extends Phaser.Scene{
     // 車20種（側面ビューをそのまま使用）
     STAGES.forEach(s=>queueSvg(this,`car_${s.id}`,getCarSVG(s.id,ALL_TRUE),200,150));
 
-    // 建物（Phase 1はBUILDING_SVGSの流用+🏠フォールバック）
-    STAGES.forEach((s,i)=>{
-      const svg=BUILDING_SVGS[BUILDING_EMOJIS[i]]||BUILDING_SVGS['🏠'];
-      queueSvg(this,`bld_${i}`,svg,110,110);
-    });
+    // 建物20種（ステージごとに固有デザイン）
+    STAGES.forEach((s,i)=>queueSvg(this,`bld_${i}`,buildingSVG(i),120,120));
+
+    // 住人12体
+    RESIDENTS.forEach(r=>queueSvg(this,`res_${r.id}`,animalSVG(r.species,r.c),80,100));
 
     // イベント/課題アイコン（SVGがある絵文字キーのみ。無いものは表示時にTextで代替）
     const iconKeys=new Set();

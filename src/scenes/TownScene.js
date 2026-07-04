@@ -4,8 +4,10 @@ import {store, save} from '../store.js';
 import {WORLD_SIZE, GRID, ROAD_GRID, DISTRICTS, BUILDING_SPOTS, TREES, FLOWERS, PLAYER_SPAWN, PLAZA} from '../data/townLayout.js';
 import {setupCamera, panTo, isTap} from '../town/camera.js';
 import {runGenericEvent} from '../town/events.js';
+import {spawnResidents} from '../town/residentsCtrl.js';
 import {soundTask, soundComplete, speak} from '../audio.js';
 import {addBurnedHouseIssue, addPoliceRiskIssue, addHospitalNeededIssue, addTransitNeededIssue} from '../state/townIssues.js';
+import {currentSeason} from '../state/state.js';
 
 const FONT="'Hiragino Maru Gothic Pro','BIZ UDPGothic',sans-serif";
 
@@ -22,7 +24,9 @@ export class TownScene extends Phaser.Scene{
     this.fx.setDepth(6000);
     this.buildDynamic();
     this.spawnPlayer();
+    this._unlockedWorld=Math.floor(store.state.stage/4);
     this.buildClouds();
+    spawnResidents(this);
 
     const c=store.state.camera;
     this.cameras.main.centerOn(c?.x??PLAZA.x,c?.y??PLAZA.y-100);
@@ -53,22 +57,34 @@ export class TownScene extends Phaser.Scene{
     TREES.forEach(t=>{
       this.add.image(t.x,t.y,'tree').setDisplaySize(112,136).setOrigin(.5,.92).setDepth(t.y);
     });
-    FLOWERS.forEach(f=>{
-      const key=f.c==='#FFB74D'?'flower_o':f.c==='#9FA8DA'?'flower_v':'flower_p';
-      this.add.image(f.x,f.y,key).setDisplaySize(44,44).setOrigin(.5,.9).setDepth(f.y);
-    });
+    if(currentSeason()!=='winter'){ // 冬は花を出さない（雪の季節感）
+      FLOWERS.forEach(f=>{
+        const key=f.c==='#FFB74D'?'flower_o':f.c==='#9FA8DA'?'flower_v':'flower_p';
+        this.add.image(f.x,f.y,key).setDisplaySize(44,44).setOrigin(.5,.9).setDepth(f.y);
+      });
+    }
   }
 
   // ── 動的レイヤー: 建物・イベント・課題マーカー ──
   buildDynamic(){
     const s=store.state;
     this.dyn.removeAll(true);
+    const firstBuild=!this._builtShown;
+    if(firstBuild)this._builtShown=new Set();
 
     STAGES.forEach((st,i)=>{
       const spot=BUILDING_SPOTS[i];
       if(s.buildings&&s.buildings[i]){
         const b=this.add.image(spot.x,spot.y,`bld_${i}`).setDisplaySize(150,150).setOrigin(.5,.86).setDepth(spot.y);
         this.dyn.add(b);
+        if(!firstBuild&&!this._builtShown.has(i)){
+          // 新しく建った建物はぽんっと登場
+          const target=b.scaleX;
+          b.setScale(target*.12);
+          this.tweens.add({targets:b,scale:target,duration:750,ease:'Back.easeOut'});
+          this.sparkle(spot.x,spot.y-55,10);
+        }
+        this._builtShown.add(i);
       }else if(i===s.stage&&s.pendingEvent<0&&i<STAGES.length){
         // いま集めている車のスポット＝「つぎはここ」の予定地
         const l=this.add.image(spot.x,spot.y,'lot').setDisplaySize(104,95).setOrigin(.5,.9).setDepth(spot.y).setAlpha(.9);
@@ -118,7 +134,10 @@ export class TownScene extends Phaser.Scene{
 
   // ── 未開放地区の雲（現マップのfogの代替） ──
   buildClouds(){
-    if(this.cloudGroup)this.cloudGroup.destroy(true);
+    if(this.cloudGroup){
+      this.cloudGroup.list.forEach(o=>this.tweens.killTweensOf(o));
+      this.cloudGroup.destroy(true);
+    }
     this.cloudGroup=this.add.container(0,0).setDepth(5000);
     const unlockedWorld=Math.floor(store.state.stage/4);
     DISTRICTS.forEach(d=>{
@@ -127,11 +146,35 @@ export class TownScene extends Phaser.Scene{
       for(let i=0;i<6;i++){
         const cx=x+w*(0.16+(i%3)*0.34),cy=y+h*(i<3?0.3:0.72);
         const cl=this.add.image(cx,cy,'cloud').setDisplaySize(w*.62,h*.56).setAlpha(.97);
+        cl.setData('world',d.world);
         this.tweens.add({targets:cl,x:cx+14,duration:2400+i*300,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
         this.cloudGroup.add(cl);
       }
       const q=this.add.text(x+w/2,y+h/2,'？',{fontFamily:FONT,fontSize:'46px',color:'#9FB4C8'}).setOrigin(.5);
+      q.setData('world',d.world);
       this.cloudGroup.add(q);
+    });
+  }
+
+  // ── 地区開放: 雲が晴れて新しいまちが見える ──
+  revealDistricts(worlds){
+    const d=DISTRICTS.find(x=>x.world===worlds[0]);
+    if(!d){this.buildClouds();return;}
+    panTo(this,d.focus.x,d.focus.y,900);
+    const targets=this.cloudGroup
+      ?this.cloudGroup.list.filter(o=>worlds.includes(o.getData('world')))
+      :[];
+    this.time.delayedCall(750,()=>{
+      soundComplete();
+      speak(`あたらしいまちが ひらけたよ。${d.name}だ！`);
+      targets.forEach((cl,i)=>{
+        this.tweens.killTweensOf(cl);
+        this.tweens.add({targets:cl,alpha:0,scale:cl.scale*1.45,y:cl.y-70,duration:1000,delay:i*80,ease:'Sine.easeIn'});
+      });
+      this.time.delayedCall(1000+targets.length*80,()=>{
+        this.sparkle(d.focus.x,d.focus.y,14);
+        this.buildClouds();
+      });
     });
   }
 
@@ -240,7 +283,16 @@ export class TownScene extends Phaser.Scene{
 
   refreshTown(){
     this.buildDynamic();
-    this.buildClouds();
+    const unlocked=Math.floor(store.state.stage/4);
+    if(unlocked>this._unlockedWorld){
+      const newWorlds=[];
+      for(let w=this._unlockedWorld+1;w<=Math.min(unlocked,DISTRICTS.length-1);w++)newWorlds.push(w);
+      this._unlockedWorld=unlocked;
+      this.revealDistricts(newWorlds);
+    }else{
+      this.buildClouds();
+    }
+    spawnResidents(this);
     if(store.ui)store.ui.updateTopbar();
   }
 

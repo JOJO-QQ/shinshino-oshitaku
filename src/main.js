@@ -35,6 +35,7 @@ Object.assign(window,{
   startPoliceConstruction:overlay.startPoliceConstruction,
   unlockSound,
 });
+window.__store=store; // デバッグ・自動テスト用（ゲームからは未使用）
 
 // 先にマップ画面を表示してから（=キャンバス親のサイズ確定後）Phaserを起動
 overlay.showScreen('screen-map');
