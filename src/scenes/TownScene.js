@@ -3,6 +3,7 @@ import {STAGES} from '../data/stages.js';
 import {store, save} from '../store.js';
 import {WORLD_SIZE, GRID, ROAD_GRID, DISTRICTS, BUILDING_SPOTS, TREES, FLOWERS, PLAYER_SPAWN, PLAZA} from '../data/townLayout.js';
 import {setupCamera, panTo, isTap} from '../town/camera.js';
+import {drivePath, driveAlong} from '../town/drive.js';
 import {runGenericEvent} from '../town/events.js';
 import {spawnResidents} from '../town/residentsCtrl.js';
 import {soundTask, soundComplete, speak} from '../audio.js';
@@ -331,12 +332,16 @@ export class TownScene extends Phaser.Scene{
     this.refreshTown();
   }
 
-  // ── 建設着工の演出（車が来て💨） ──
+  // ── 建設着工の演出（車が道路を走ってきて💨） ──
   playConstruction(stageIdx,vehicleId){
     const spot=BUILDING_SPOTS[stageIdx];
-    const car=this.add.image(spot.x-500,spot.y+60,`car_${vehicleId}`).setDisplaySize(170,128).setDepth(6100);
+    const pts=drivePath(spot.x,spot.y);
+    const car=this.add.image(pts[0].x,pts[0].y,`car_${vehicleId}`).setDisplaySize(170,128).setDepth(6100);
     this.fx.add(car);
-    this.tweens.add({targets:car,x:spot.x-30,duration:1000,ease:'Sine.easeOut',onComplete:()=>{
+    this.cameras.main.startFollow(car,true,.08,.08);
+    driveAlong(this,car,pts,430,()=>{
+      this.cameras.main.stopFollow();
+      panTo(this,spot.x,spot.y,500);
       for(let i=0;i<5;i++){
         const puff=this.icon(spot.x+Phaser.Math.Between(-30,30),spot.y-20-i*8,'💨',44);
         puff.setDepth(6200);this.fx.add(puff);
@@ -344,8 +349,7 @@ export class TownScene extends Phaser.Scene{
       }
       this.sparkle(spot.x,spot.y-30,8);
       this.time.delayedCall(1600,()=>{this.tweens.add({targets:car,x:spot.x+560,duration:900,ease:'Sine.easeIn',onComplete:()=>car.destroy()});});
-    }});
-    panTo(this,spot.x,spot.y,700);
+    });
   }
 
   // ── 建設完成（翌日）の演出 ──
