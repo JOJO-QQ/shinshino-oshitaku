@@ -3,7 +3,7 @@ import {STAGES} from '../data/stages.js';
 import {RESIDENTS} from '../data/residents.js';
 import {getCarSVG, ALL_TRUE} from '../assets/cars.js';
 import {EVT_SVGS, BUILDING_SVGS, BOY_SVG} from '../assets/eventSvg.js';
-import {SEASON_PALETTES, grassTile, roadTile, treeSVG, flowerSVG, cloudSVG, lotSVG, ringSVG, buildingSVG,
+import {SEASON_PALETTES, grassTile, roadTile, treeSVG, flowerSVG, cloudSVG, lotSVG, ringSVG, bushSVG, buildingSVG,
   balloonSVG, rainbowSVG, fountainSVG, petalSVG, leafFallSVG, snowflakeSVG, raindropSVG} from '../assets/townSvg.js';
 import {animalSVG} from '../assets/peopleSvg.js';
 import {queueSvg, releaseSvgUrls} from '../assets/textures.js';
@@ -36,6 +36,7 @@ export class BootScene extends Phaser.Scene{
     queueSvg(this,'cloud',cloudSVG(),300,180);
     queueSvg(this,'lot',lotSVG(),120,110);
     queueSvg(this,'ring',ringSVG(),160,160);
+    queueSvg(this,'bush',bushSVG(pal),120,100);
     queueSvg(this,'boy',BOY_SVG,80,96);
 
     // 車20種（側面ビューをそのまま使用）
@@ -62,7 +63,7 @@ export class BootScene extends Phaser.Scene{
     // イベント/課題アイコン（SVGがある絵文字キーのみ。無いものは表示時にTextで代替）
     const iconKeys=new Set();
     STAGES.forEach(s=>{iconKeys.add(s.ev.e);iconKeys.add(s.ev.a);});
-    ['🏚️','🚧','🤕','🎯','🦹','🏢','💨','✋','✅','🔥','💧'].forEach(k=>iconKeys.add(k));
+    ['🏚️','🚧','🤕','🎯','🦹','🏢','💨','✋','✅','🔥','💧','🪝'].forEach(k=>iconKeys.add(k));
     iconKeys.forEach(k=>{
       const svg=EVT_SVGS[k]||BUILDING_SVGS[k];
       if(svg)queueSvg(this,`icon_${k}`,svg,96,96);

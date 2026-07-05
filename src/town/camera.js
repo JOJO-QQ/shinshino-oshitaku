@@ -17,8 +17,12 @@ export function setupCamera(scene,worldW,worldH){
   let pinching=false,pinchDist=0,pinchZoom=1;
   const p1=scene.input.pointer1,p2=scene.input.pointer2;
 
-  scene.input.on('pointerdown',p=>{dragging=true;lx=p.x;ly=p.y;vx=0;vy=0;});
+  scene.input.on('pointerdown',p=>{
+    if(scene.eventRunning)return; // ミニゲーム中はカメラを動かさない
+    dragging=true;lx=p.x;ly=p.y;vx=0;vy=0;
+  });
   scene.input.on('pointermove',p=>{
+    if(scene.eventRunning){dragging=false;return;}
     // 2本指: ピンチズーム
     if(p1.isDown&&p2.isDown){
       const d=Phaser.Math.Distance.Between(p1.x,p1.y,p2.x,p2.y);
@@ -46,7 +50,7 @@ export function setupCamera(scene,worldW,worldH){
     cam.setZoom(Phaser.Math.Clamp(cam.zoom-dy*.0011,MIN_ZOOM,MAX_ZOOM));
   });
   scene.events.on('update',()=>{
-    if(dragging||pinching)return;
+    if(dragging||pinching||scene.eventRunning)return;
     if(Math.abs(vx)<.4&&Math.abs(vy)<.4){vx=0;vy=0;return;}
     vx*=.93;vy*=.93;   // 慣性の減衰
     cam.scrollX-=vx/cam.zoom;

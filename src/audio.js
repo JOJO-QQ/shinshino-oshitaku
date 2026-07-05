@@ -11,6 +11,31 @@ const REMINDER_TEXT={
 };
 
 let audioCtx=null, audioReady=false, soundUnlocked=false, fireSoundTimer=null, reminderTimer=null, eventHintTimer=null, lastReminderIdx=0;
+
+// ── 事前生成音声（edge-tts / tools/gen_voices.mjs で作成） ──
+// manifest.json: {セリフ: mp3ファイル名}。ある場合は自然音声を再生、
+// ない場合・再生できない場合は SpeechSynthesis にフォールバック。
+let voiceMap=null, currentVoice=null;
+const voiceCache=new Map();
+fetch('audio/manifest.json').then(r=>r.ok?r.json():null).then(m=>{voiceMap=m;}).catch(()=>{});
+function stopVoice(){
+  if(currentVoice){try{currentVoice.pause();currentVoice.currentTime=0;}catch{}currentVoice=null;}
+  try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch{}
+}
+function playVoiceFile(text){
+  if(!voiceMap||!voiceMap[text])return false;
+  try{
+    let a=voiceCache.get(text);
+    if(!a){a=new Audio('audio/'+voiceMap[text]);a.preload='auto';voiceCache.set(text,a);}
+    stopVoice();
+    a.currentTime=0;
+    const p=a.play();
+    if(p&&p.catch)p.catch(()=>{speakSynth(text);}); // 自動再生ブロック時は合成音声で代替
+    currentVoice=a;
+    soundUnlocked=true;updateSoundButton();
+    return true;
+  }catch{return false;}
+}
 function updateSoundButton(){
   const btn=document.getElementById('sound-unlock');
   if(!btn)return;
@@ -35,6 +60,10 @@ async function unlockSound(){
 }
 function speak(text){
   ensureAudio();
+  if(playVoiceFile(text))return;   // 自然音声があればそちらを使う
+  speakSynth(text);
+}
+function speakSynth(text){
   try{
     if(!('speechSynthesis' in window))return;
     const u=new SpeechSynthesisUtterance(text);

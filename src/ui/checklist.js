@@ -121,7 +121,7 @@ function showStampCard(proceed){
     next?`あと${next[0]-st.streak}にちで ${next[1]}！`:'まちが キラキラだね！';
   popup.classList.remove('hidden');
   soundComplete();
-  speak(`スタンプ、ぽん！れんぞく${st.streak}にちだよ。`);
+  speak('スタンプ、ぽん！きょうも がんばったね！'); // 事前生成音声のため固定文言（連続日数は画面に表示）
   setTimeout(()=>{popup.classList.add('hidden');proceed();},3000);
 }
 

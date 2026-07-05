@@ -188,6 +188,23 @@ export function lotSVG(){
 <path d="M88 70 Q90 62 96 60 Q94 68 90 72 Z" fill="#6FBB58"/></svg>`;
 }
 
+// しげみ（かくれんぼミニゲーム用）120×100
+export function bushSVG(pal=SEASON_PALETTES.spring){
+  const g=uq(),f=uq();
+  const [m1,m2,m3]=pal.leaf2;
+  return`<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+<defs><radialGradient id="${g}" cx=".4" cy=".3" r=".95">
+<stop offset="0" stop-color="${m1}"/><stop offset=".6" stop-color="${m2}"/><stop offset="1" stop-color="${m3}"/></radialGradient>
+${blurDef(f)}</defs>
+<ellipse cx="60" cy="92" rx="44" ry="8" fill="${SHADOW}" opacity=".32" filter="url(#${f})"/>
+<ellipse cx="60" cy="58" rx="46" ry="34" fill="url(#${g})"/>
+<ellipse cx="30" cy="68" rx="24" ry="20" fill="url(#${g})"/>
+<ellipse cx="92" cy="68" rx="22" ry="19" fill="url(#${g})"/>
+<circle cx="44" cy="44" r="5" fill="${lite(m1,.4)}" opacity=".8"/>
+<circle cx="62" cy="38" r="4" fill="${lite(m1,.4)}" opacity=".65"/>
+<circle cx="80" cy="48" r="4.5" fill="${lite(m1,.3)}" opacity=".6"/></svg>`;
+}
+
 // タップ誘導の光るリング 160×160
 export function ringSVG(color='#FFE66D'){
   return`<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
