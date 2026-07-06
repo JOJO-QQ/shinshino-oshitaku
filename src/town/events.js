@@ -1,11 +1,11 @@
 // ── イベント: 車が道路を走って現場へ→ミニゲームで解決 ──────────
 // v5の「タップ3回」から刷新。車は広場から道路グリッドを走行し、
-// 到着後に車種ごとのミニゲーム（spray/find/drag/swipe/crane）が始まる。
+// 到着後に車種ごとのミニゲーム（spray/find/drag/swipe/crane/trace/seq/dragTo）が始まる。
 import {STAGES} from '../data/stages.js';
 import {BUILDING_SPOTS} from '../data/townLayout.js';
 import {ensureAudio, speak, soundSiren, soundComplete} from '../audio.js';
 import {drivePath, driveAlong} from './drive.js';
-import {MINIGAMES, TYPE_BY_ID, TYPE_GUIDE, TITLE_BY_ID} from './minigames.js';
+import {MINIGAMES, guideFor} from './minigames.js';
 
 const FONT="'Hiragino Maru Gothic Pro','BIZ UDPGothic',sans-serif";
 
@@ -13,9 +13,9 @@ export function runGenericEvent(scene,fi,onDone){
   ensureAudio();
   const st=STAGES[fi];
   const spot=BUILDING_SPOTS[fi];
-  const type=TYPE_BY_ID[st.id]||'swipe';
-  const guide=TYPE_GUIDE[type];
-  const title=TITLE_BY_ID[st.id]||guide.title;
+  const guide=guideFor(st);
+  const type=guide.type;
+  const title=guide.title;
 
   const banner=scene.add.text(scene.scale.width/2,64,title,{
     fontFamily:FONT,fontSize:'24px',color:'#fff',backgroundColor:'rgba(58,42,20,.72)',padding:{x:16,y:9},

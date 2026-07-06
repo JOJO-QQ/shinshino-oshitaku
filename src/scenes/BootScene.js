@@ -63,7 +63,8 @@ export class BootScene extends Phaser.Scene{
     // イベント/課題アイコン（SVGがある絵文字キーのみ。無いものは表示時にTextで代替）
     const iconKeys=new Set();
     STAGES.forEach(s=>{iconKeys.add(s.ev.e);iconKeys.add(s.ev.a);});
-    ['🏚️','🚧','🤕','🎯','🦹','🏢','💨','✋','✅','🔥','💧','🪝'].forEach(k=>iconKeys.add(k));
+    ['🏚️','🚧','🤕','🎯','🦹','🏢','💨','✋','✅','🔥','💧','🪝',
+     '🚏','📮','🩹','🏥','🎓','🏠'].forEach(k=>iconKeys.add(k)); // seq/dragTo用
     iconKeys.forEach(k=>{
       const svg=EVT_SVGS[k]||BUILDING_SVGS[k];
       if(svg)queueSvg(this,`icon_${k}`,svg,96,96);
