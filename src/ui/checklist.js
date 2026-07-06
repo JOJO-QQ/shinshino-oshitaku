@@ -237,9 +237,15 @@ function renderGarage(){
   else renderGarBuildings(grid);
 }
 
+// 完成率メーター（図鑑3タブ共通のサブ表示）
+function setGarSub(text,done,total){
+  document.getElementById('gar-sub').innerHTML=
+    `${text}<div class="gar-meter"><div class="gar-meter-fill" style="width:${Math.round(done/total*100)}%"></div></div>`;
+}
+
 function renderGarCars(grid){
   const state=store.state;
-  document.getElementById('gar-sub').textContent=`くるま ${state.stage} / ${STAGES.length} だい`;
+  setGarSub(`くるま ${state.stage} / ${STAGES.length} だい`,state.stage,STAGES.length);
   STAGES.forEach((s,i)=>{
     const owned=i<state.stage;
     const cell=document.createElement('div');cell.className=`gar-cell ${owned?'owned':'locked'}`;
@@ -259,7 +265,7 @@ function renderGarResidents(grid){
   const state=store.state;
   const met=r=>!!(state.residents&&state.residents[r.id]);
   const count=RESIDENTS.filter(met).length;
-  document.getElementById('gar-sub').textContent=`ともだち ${count} / ${RESIDENTS.length} にん`;
+  setGarSub(`ともだち ${count} / ${RESIDENTS.length} にん`,count,RESIDENTS.length);
   RESIDENTS.forEach(r=>{
     const known=met(r);
     const rec=known?state.residents[r.id]:null;
@@ -287,7 +293,7 @@ function renderGarBuildings(grid){
   const state=store.state;
   const built=i=>!!(state.buildings&&state.buildings[i]);
   const count=STAGES.map((_,i)=>i).filter(built).length;
-  document.getElementById('gar-sub').textContent=`たてもの ${count} / ${STAGES.length} けん`;
+  setGarSub(`たてもの ${count} / ${STAGES.length} けん`,count,STAGES.length);
   STAGES.forEach((s,i)=>{
     const has=built(i);
     const cell=document.createElement('div');

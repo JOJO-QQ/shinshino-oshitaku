@@ -66,6 +66,14 @@ export function guideFor(st){
 
 const kill=(scene,objs)=>objs.forEach(o=>{if(o&&o.active!==false){scene.tweens.killTweensOf(o);o.destroy();}});
 
+// 5歳児の指対策: 当たり判定を実寸+30%に広げてから操作可能にする
+function fatHit(o){
+  o.setInteractive({useHandCursor:true});
+  const ha=o.input&&o.input.hitArea;
+  if(ha&&ha.setTo)ha.setTo(ha.x-ha.width*.15,ha.y-ha.height*.15,ha.width*1.3,ha.height*1.3);
+  return o;
+}
+
 // 共通: ちいさな達成演出
 function popDone(scene,x,y){
   soundTask();
@@ -78,7 +86,7 @@ function spray(scene,spot,st,car,finish){
   const flames=[[-72,-26],[0,-72],[72,-26]].map(([dx,dy],i)=>{
     const f=scene.icon(spot.x+dx,spot.y+dy-30,st.ev.e,86);
     f.setDepth(6300);f.hp=10;f.baseScale=f.scale;
-    f.setInteractive({useHandCursor:true});
+    fatHit(f);
     scene.tweens.add({targets:f,scale:f.scale*1.07,duration:420,yoyo:true,repeat:-1,delay:i*140});
     objs.push(f);
     return f;
@@ -119,7 +127,7 @@ function find(scene,spot,st,car,finish){
   let round=0,busy=false;
   const bushes=[[-84,10],[0,-46],[84,10]].map(([dx,dy])=>{
     const b=scene.add.image(spot.x+dx,spot.y+dy-20,'bush').setDisplaySize(96,78).setOrigin(.5,.85).setDepth(6300);
-    b.setInteractive({useHandCursor:true});
+    fatHit(b);
     objs.push(b);
     return b;
   });
@@ -166,7 +174,7 @@ function drag(scene,spot,st,car,finish){
   const items=[[-60,-70],[64,-58]].map(([dx,dy])=>{
     const it=scene.icon(spot.x+dx,spot.y+dy,st.ev.e,72);
     it.setDepth(6400);it.homeX=it.x;it.homeY=it.y;
-    it.setInteractive({useHandCursor:true});
+    fatHit(it);
     scene.tweens.add({targets:it,y:it.y-8,duration:600,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     it.on('pointerdown',()=>{grab=it;scene.tweens.killTweensOf(it);});
     objs.push(it);
@@ -201,7 +209,7 @@ function swipe(scene,spot,st,car,finish){
   [[-76,-14],[6,-64],[82,-8]].forEach(([dx,dy])=>{
     const it=scene.icon(spot.x+dx,spot.y+dy-16,st.ev.e,78);
     it.setDepth(6300);
-    it.setInteractive({useHandCursor:true});
+    fatHit(it);
     it.on('pointerdown',p=>{active=it;sx=p.worldX;sy=p.worldY;});
     objs.push(it);
   });
@@ -358,7 +366,7 @@ function seq(scene,spot,st,car,finish){
   });
   refresh();
   groups.forEach((g,i)=>{
-    g.it.setInteractive({useHandCursor:true});
+    fatHit(g.it);
     g.it.on('pointerdown',()=>{
       if(busy)return;
       if(i!==step){ // まちがい: ぶるぶる
@@ -397,7 +405,7 @@ function dragTo(scene,spot,st,car,finish){
   const items=[[-104,-66],[-46,-14]].map(([dx,dy])=>{
     const it=scene.icon(spot.x+dx,spot.y+dy,cfg.item,70);
     it.setDepth(6400);it.homeX=it.x;it.homeY=it.y;
-    it.setInteractive({useHandCursor:true});
+    fatHit(it);
     scene.tweens.add({targets:it,y:it.y-8,duration:600,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     it.on('pointerdown',()=>{grab=it;scene.tweens.killTweensOf(it);});
     objs.push(it);

@@ -2,11 +2,11 @@
 // 建物が建った住人が家のまわりをのんびり歩く。タップで吹き出し+読み上げ。
 // 友好度は1日1回だけ上がる（v6 state.residents に記録）。
 
-import {activeResidents} from '../data/residents.js';
+import {activeResidents, RESIDENTS} from '../data/residents.js';
 import {applyQuestEvent} from '../data/quests.js';
 import {BUILDING_SPOTS} from '../data/townLayout.js';
 import {store, save} from '../store.js';
-import {dateString} from '../state/state.js';
+import {dateString, weatherFor} from '../state/state.js';
 import {speak, soundTask} from '../audio.js';
 import {isTap} from './camera.js';
 
@@ -20,7 +20,15 @@ export function spawnResidents(scene){
   if(scene.residentGroup)scene.residentGroup.destroy(true);
   scene.residentGroup=scene.add.container(0,0);
   const today=dateString();
-  const roster=activeResidents(store.state,today).map(r=>({r,home:BUILDING_SPOTS[r.stageIdx]}));
+  const rainDay=weatherFor(today)==='rain';
+  let list=activeResidents(store.state,today);
+  // 雨の日はカエルのけろたが必ず出てくる（雨をポジティブに）
+  if(rainDay){
+    const frog=RESIDENTS.find(r=>r.species==='frog');
+    if(frog&&store.state.buildings&&store.state.buildings[frog.stageIdx]&&!list.some(r=>r.id===frog.id))
+      list=[...list,frog];
+  }
+  const roster=list.map(r=>({r,home:BUILDING_SPOTS[r.stageIdx]}));
   if(((store.state.stamps&&store.state.stamps.streak)||0)>=30)roster.push({r:KIRARI,home:{x:1300,y:1440}});
   roster.forEach(({r,home})=>{
     if(!home)return;
@@ -36,7 +44,24 @@ export function spawnResidents(scene){
     sp.on('pointerup',p=>{if(isTap(p))greet(scene,sp);});
     scene.residentGroup.add(sp);
     scene.time.delayedCall(Phaser.Math.Between(300,2200),()=>wander(scene,sp));
+    if(rainDay&&r.species==='frog')rainJoy(scene,sp);
   });
+}
+
+// 雨の日のカエル: ぴょんぴょん喜ぶ+🎵（歩きと競合しないようスクワッシュで表現）
+function rainJoy(scene,sp){
+  sp.rainHappy=true;
+  const hop=()=>{
+    if(!sp.active)return;
+    if(!sp.busy){
+      scene.tweens.add({targets:sp,scaleY:sp.scaleY*1.18,scaleX:sp.scaleX*.9,duration:150,yoyo:true,repeat:1,ease:'Sine.easeOut'});
+      const note=scene.add.text(sp.x+Phaser.Math.Between(-16,16),sp.y-74,'🎵',{fontSize:'22px'}).setOrigin(.5).setDepth(7000);
+      scene.fx.add(note);
+      scene.tweens.add({targets:note,y:note.y-30,alpha:0,duration:900,onComplete:()=>note.destroy()});
+    }
+    scene.time.delayedCall(Phaser.Math.Between(2200,3800),hop);
+  };
+  scene.time.delayedCall(1200,hop);
 }
 
 function wander(scene,sp){
@@ -81,6 +106,7 @@ function greet(scene,sp){
 
   const line=firstMeet
     ?`こんにちは！${r.name}だよ！`
+    :sp.rainHappy?'あめ、だいすき！けろけろ！'
     :r.lines[(rec.friendship+r.lines.length)%r.lines.length];
   soundTask();
   speak(line);
